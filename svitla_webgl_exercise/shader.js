@@ -11,15 +11,13 @@ var FSHADER_SOURCE = `
     gl_FragColor = u_Color;
   }`;
 
-var currentColorIndex = 0;
 var colors = [
   [1.0, 0.0, 0.0, 1.0], // Red
-  [1.0, 0.5, 0.0, 1.0], // Orange
-  [1.0, 1.0, 0.0, 1.0], // Yellow
   [0.0, 1.0, 0.0, 1.0], // Green
-  [0.0, 0.0, 1.0, 1.0], // Blue
-  [0.5, 0.0, 1.0, 1.0]  // Purple
+  [0.0, 0.0, 1.0, 1.0]  // Blue
 ];
+
+var currentColorIndex = 0;
 
 function main(){
   var canvas = document.getElementById('webgl');
@@ -35,49 +33,25 @@ function main(){
     return;
   }
 
-  var vertices = new Float32Array([
-    0.25, -0.25, 0.0,
-    0.25, 0.25, 0.0,
-    -0.25, -0.25, 0.0
-  ]);
-
-  var vertexBuffer = gl.createBuffer();
-  if(!vertexBuffer){
-    console.log('Failed to create the buffer object');
-    return -1;
-  }
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
   var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
   if(a_Position < 0){
     console.log('Failed to get the storage location of a_Position');
     return;
   }
 
-  gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(a_Position);
-
-  var u_Color = gl.getUniformLocation(gl.program, 'u_Color');
-  if (!u_Color) {
-    console.log('Failed to get the storage location of u_Color');
-    return;
-  }
-
   canvas.onmousedown = function(ev){ 
-    click(ev, gl, canvas, u_Color); 
+    click(ev, gl, canvas, a_Position); 
   };
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 
-function click(ev, gl, canvas, u_Color){
+function click(ev, gl, canvas, a_Position){
   if(currentColorIndex >= colors.length){
     currentColorIndex = 0;
   }
+  var u_Color = gl.getUniformLocation(gl.program, 'u_Color');
   gl.uniform4fv(u_Color, colors[currentColorIndex]);
   currentColorIndex++;
 
@@ -88,7 +62,6 @@ function click(ev, gl, canvas, u_Color){
   x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
   y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
 
-  // Draw a new triangle at the clicked position with the current color
   var vertices = new Float32Array([
     x + 0.1, y - 0.1, 0.0,
     x + 0.1, y + 0.1, 0.0,
@@ -103,13 +76,6 @@ function click(ev, gl, canvas, u_Color){
 
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-  var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-  if(a_Position < 0){
-    console.log('Failed to get the storage location of a_Position');
-    return;
-  }
-
   gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_Position);
 
