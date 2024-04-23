@@ -1,9 +1,11 @@
+// Vertex shader source code
 var VSHADER_SOURCE = `
   attribute vec4 a_Position;
   void main() {
     gl_Position = a_Position;
   }`;
 
+// Fragment shader source code
 var FSHADER_SOURCE = `
   precision mediump float;
   uniform vec4 u_Color;
@@ -11,77 +13,94 @@ var FSHADER_SOURCE = `
     gl_FragColor = u_Color;
   }`;
 
+// Array of colors
 var colors = [
   [1.0, 0.0, 0.0, 1.0], // Red
   [0.0, 1.0, 0.0, 1.0], // Green
   [0.0, 0.0, 1.0, 1.0]  // Blue
 ];
 
+// Index to keep track of current color
 var currentColorIndex = 0;
+var vertexBuffer; // Buffer for storing vertex data
 
 function main(){
+  // Retrieve the canvas element
   var canvas = document.getElementById('webgl');
   var gl = getWebGLContext(canvas);
 
+  // Check if WebGL context was successfully retrieved
   if(!gl){
     console.log('Failed to get the WebGL context');
     return;
   }
 
+  // Initialize shaders
   if(!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)){
     console.log('Failed to initialize shaders');
     return;
   }
 
+  // Initialize vertex buffer
+  vertexBuffer = gl.createBuffer();
+  if(!vertexBuffer){
+    console.log('Failed to create the buffer object');
+    return -1;
+  }
+
+  // Get the storage location of attribute variable
   var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
   if(a_Position < 0){
     console.log('Failed to get the storage location of a_Position');
     return;
   }
 
+  // Set up click event listener
   canvas.onmousedown = function(ev){ 
     click(ev, gl, canvas, a_Position); 
   };
 
+  // Set clear color
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 }
 
 function click(ev, gl, canvas, a_Position){
+  // Check if we need to reset the color index
   if(currentColorIndex >= colors.length){
     currentColorIndex = 0;
   }
+
+  // Set the color
   var u_Color = gl.getUniformLocation(gl.program, 'u_Color');
   gl.uniform4fv(u_Color, colors[currentColorIndex]);
   currentColorIndex++;
 
+  // Calculate the coordinates relative to canvas
   var x = ev.clientX;
   var y = ev.clientY;
   var rect = ev.target.getBoundingClientRect();
-
   x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
   y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
 
+  // Define the vertices of the triangle
   var vertices = new Float32Array([
     x + 0.1, y - 0.1, 0.0,
     x + 0.1, y + 0.1, 0.0,
     x - 0.1, y - 0.1, 0.0
   ]);
 
-  var vertexBuffer = gl.createBuffer();
-  if(!vertexBuffer){
-    console.log('Failed to create the buffer object');
-    return -1;
-  }
-
+  // Update vertex buffer data
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
   gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_Position);
 
+  // Clear canvas and draw the triangle
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
+
 
   
 function rightclick(ev, gl){
